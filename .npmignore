@@ -1,0 +1,11 @@
+node_modules
+.nyc_output
+.node-persist
+.store
+coverage
+docs
+config/local.js
+npm-debug.log
+
+lib
+test
