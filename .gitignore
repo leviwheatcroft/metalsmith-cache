@@ -6,5 +6,4 @@ docs
 config/local.js
 npm-debug.log
 
-dist
 test/fixtures/*/build
