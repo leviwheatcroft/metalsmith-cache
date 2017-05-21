@@ -8,6 +8,7 @@
     "client": "node dist/build && npm run webpack",
     "readme": "node-readme",
     "babel": "cross-env NODE_ENV=node6 babel lib -d dist",
+    "babel:watch": "cross-env NODE_ENV=node6 babel lib -d dist -w",
     "docs": "npm run readme && rm -fr ./docs/* && docker -o ./docs -I -x dist,.README.md,test/fixtures,node_modules,docs,.store,config && cp --parents images/* docs",
     "gh-pages": "gh-pages -d docs",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text --check-coverage --lines 100 npm run test",
