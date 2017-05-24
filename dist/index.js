@@ -9,9 +9,9 @@ var _lokijs = require('lokijs');
 
 var _lokijs2 = _interopRequireDefault(_lokijs);
 
-var _multimatch = require('multimatch');
+var _minimatch = require('minimatch');
 
-var _multimatch2 = _interopRequireDefault(_multimatch);
+var _minimatch2 = _interopRequireDefault(_minimatch);
 
 var _vow = require('vow');
 
@@ -67,7 +67,16 @@ class FileCache {
     return results;
   }
   match(mask) {
-    this.collection.where(doc => (0, _multimatch2.default)(mask, [doc.path]));
+    const results = {};
+    this.collection.data.forEach(doc => {
+      if (!(0, _minimatch2.default)(doc.path, mask)) return;
+      results[doc.path] = doc.file;
+    });
+    return results;
+  }
+  remove(path) {
+    const result = this.collection.findOne({ path });
+    if (result) result.remove();
   }
 }
 
@@ -79,10 +88,9 @@ class ValueCache {
     const existing = this.collection.findOne({ key });
     if (existing) {
       existing.value = value;
-      this.collection.update(existing);
-    } else {
-      this.collection.insert({ key, value });
+      return this.collection.update(existing);
     }
+    return this.collection.insert({ key, value });
   }
   retrieve(key) {
     const result = this.collection.findOne({ key });

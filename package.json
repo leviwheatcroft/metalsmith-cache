@@ -45,7 +45,7 @@
   "dependencies": {
     "debug": "^2.6.6",
     "lokijs": "^1.4.3",
-    "multimatch": "^2.1.0",
+    "minimatch": "^3.0.4",
     "sha1": "^1.1.1",
     "vow": "^0.4.15"
   },
