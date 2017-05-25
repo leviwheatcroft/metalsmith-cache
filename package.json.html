@@ -48,7 +48,7 @@
         <td class="code highlight">
           <pre class="json">{
   <span class="hljs-attr">"name"</span>: <span class="hljs-string">"metalsmith-cache"</span>,
-  <span class="hljs-attr">"version"</span>: <span class="hljs-string">"0.0.3"</span>,
+  <span class="hljs-attr">"version"</span>: <span class="hljs-string">"0.0.4"</span>,
   <span class="hljs-attr">"description"</span>: <span class="hljs-string">"metalsmith helper to store files and values between sessions"</span>,
   <span class="hljs-attr">"main"</span>: <span class="hljs-string">"dist"</span>,
   <span class="hljs-attr">"scripts"</span>: {
@@ -63,7 +63,6 @@
     <span class="hljs-attr">"test:watch"</span>: <span class="hljs-string">"cross-env NODE_ENV=test mocha --compilers js:babel-register --watch test"</span>,
     <span class="hljs-attr">"version"</span>: <span class="hljs-string">"npm run build"</span>,
     <span class="hljs-attr">"postversion"</span>: <span class="hljs-string">"git push &amp;&amp; git push --tags"</span>,
-    <span class="hljs-attr">"postinstall"</span>: <span class="hljs-string">"echo-cli WARN you should probably .gitignore cache.json"</span>,
     <span class="hljs-attr">"watch"</span>: <span class="hljs-string">"npm-watch"</span>
   },
   <span class="hljs-attr">"repository"</span>: {
@@ -91,7 +90,6 @@
   },
   <span class="hljs-attr">"dependencies"</span>: {
     <span class="hljs-attr">"debug"</span>: <span class="hljs-string">"^2.6.6"</span>,
-    <span class="hljs-attr">"echo-cli"</span>: <span class="hljs-string">"^1.0.8"</span>,
     <span class="hljs-attr">"lokijs"</span>: <span class="hljs-string">"^1.4.3"</span>,
     <span class="hljs-attr">"minimatch"</span>: <span class="hljs-string">"^3.0.4"</span>,
     <span class="hljs-attr">"vow"</span>: <span class="hljs-string">"^0.4.15"</span>
