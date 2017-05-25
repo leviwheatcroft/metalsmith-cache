@@ -4,19 +4,18 @@
   "description": "metalsmith helper to store files and values between sessions",
   "main": "dist",
   "scripts": {
-    "build": "npm run babel && npm run client && npm run docs && cp docs/README.md.html docs/index.html && npm run gh-pages",
-    "client": "node dist/build && npm run webpack",
+    "build": "npm run babel && npm run docs && cp docs/README.md.html docs/index.html && npm run gh-pages",
     "readme": "node-readme",
     "babel": "cross-env NODE_ENV=node6 babel lib -d dist",
     "babel:watch": "cross-env NODE_ENV=node6 babel lib -d dist -w",
-    "docs": "npm run readme && rm -fr ./docs/* && docker -o ./docs -I -x dist,.README.md,test/fixtures,node_modules,docs,.store,config && cp --parents images/* docs",
+    "docs": "npm run readme && rm -fr ./docs/* && docker -o ./docs -I -x dist,.README.md,test/fixtures,node_modules,docs,config && cp --parents images/* docs || true",
     "gh-pages": "gh-pages -d docs",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text --check-coverage --lines 100 npm run test",
     "test": "cross-env NODE_ENV=test mocha --compilers js:babel-register test",
     "test:watch": "cross-env NODE_ENV=test mocha --compilers js:babel-register --watch test",
     "version": "npm run build",
     "postversion": "git push && git push --tags",
-    "webpack": "webpack --config webpack.config.js",
+    "postinstall": "echo-cli WARN you should probably .gitignore cache.json",
     "watch": "npm-watch"
   },
   "repository": {
@@ -44,9 +43,9 @@
   },
   "dependencies": {
     "debug": "^2.6.6",
+    "echo-cli": "^1.0.8",
     "lokijs": "^1.4.3",
     "minimatch": "^3.0.4",
-    "sha1": "^1.1.1",
     "vow": "^0.4.15"
   },
   "devDependencies": {
