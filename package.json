@@ -15,7 +15,6 @@
     "test:watch": "cross-env NODE_ENV=test mocha --compilers js:babel-register --watch test",
     "version": "npm run build",
     "postversion": "git push && git push --tags",
-    "postinstall": "echo-cli WARN you should probably .gitignore cache.json",
     "watch": "npm-watch"
   },
   "repository": {
@@ -43,7 +42,6 @@
   },
   "dependencies": {
     "debug": "^2.6.6",
-    "echo-cli": "^1.0.8",
     "lokijs": "^1.4.3",
     "minimatch": "^3.0.4",
     "vow": "^0.4.15"
