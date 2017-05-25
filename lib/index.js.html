@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>index.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="../doc-style.css" />
+  <script src="../doc-filelist.js"></script>
+  <script>
+    var relativeDir = "../";
+    var thisFile = "lib/index.js";
+    var defaultSidebar = true;
+  </script>
+  <script src="../doc-script.js"></script>
+
+</head>
+<body>
+  <div id="sidebar_wrapper">
+    <div id="sidebar_switch">
+      <span class="tree">Files</span>
+      <span class="headings">Headings</span>
+    </div>
+    <div id="tree"></div>
+    <div id="headings">
+
+      <div class="heading h2">
+        <a href="#init">init</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#save">save</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#filecache">FileCache</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#constructor-1">constructor</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#store">store</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#retrieve">retrieve</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#all">all</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#match">match</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#remove">remove</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#valuecache">ValueCache</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#constructor-2">constructor</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#store-1">store</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#retrieve-1">retrieve</a>
+      </div>
+
+    </div>
+  </div>
+  <div id="sidebar-toggle"></div>
+  <div id="container">
+    <div class="background highlight"></div>
+<table cellpadding="0" cellspacing="0">
+  <tbody>
+    
+      <tr>
+        <td class="docs">
+          <h1>index.js</h1>
+        </td>
+        <td class="code highlight"></td>
+      </tr>
+    
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-1" id="section-1"></a>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-keyword">import</span> Loki <span class="hljs-keyword">from</span> <span class="hljs-string">'lokijs'</span>
+<span class="hljs-keyword">import</span> minimatch <span class="hljs-keyword">from</span> <span class="hljs-string">'minimatch'</span>
+<span class="hljs-keyword">import</span> vow <span class="hljs-keyword">from</span> <span class="hljs-string">'vow'</span>
+<span class="hljs-keyword">import</span> debug <span class="hljs-keyword">from</span> <span class="hljs-string">'debug'</span>
+
+<span class="hljs-keyword">const</span> dbg = debug(<span class="hljs-string">'metalsmith-debug'</span>)
+
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-2" id="section-2"></a>
+</div>
+<p>promise to keep track of load state</p>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-keyword">const</span> loaded = vow.defer()
+loaded.promise()
+.then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> dbg(<span class="hljs-string">'cache loaded'</span>))
+
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-3" id="section-3"></a>
+</div>
+<p>instantiate &amp; load</p>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> loki = <span class="hljs-keyword">new</span> Loki(
+  <span class="hljs-string">'cache.json'</span>
+)
+loki.loadDatabase({}, () =&gt; loaded.resolve(loki))
+
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="init">
+  <h2>
+    <a href="#init" name="init" class="pilcrow"></a>
+init
+  </h2>
+</div>
+<p>Promise resolved when db initiated.</p>
+</div>
+<div class="body">
+<p>Initialisation begins when the module is loaded. This fn merely returns a
+promise or calls a callback once initialisation is complete. That means it's
+ok to call <code>init</code> multiple times in your consumer code.</p>
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">cb</span>
+<span class="dox_type">Function</span>
+<span>callback
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">init</span> (<span class="hljs-params">cb</span>) </span>{
+  <span class="hljs-keyword">if</span> (cb) <span class="hljs-keyword">return</span> loaded.promise().then(cb)
+  <span class="hljs-keyword">return</span> loaded.promise()
+}
+
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="save">
+  <h2>
+    <a href="#save" name="save" class="pilcrow"></a>
+save
+  </h2>
+</div>
+<p>Writes db to disk</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">cb</span>
+<span class="dox_type">Function</span>
+<span>callback
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">save</span> (<span class="hljs-params">cb</span>) </span>{
+  <span class="hljs-keyword">const</span> defer = vow.defer()
+  defer.promise()
+  .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> dbg(<span class="hljs-string">'cache saved'</span>))
+  .then(cb)
+  loki.saveDatabase(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> defer.resolve())
+  <span class="hljs-keyword">return</span> defer.promise()
+}
+
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="filecache">
+  <h2>
+    <a href="#filecache" name="filecache" class="pilcrow"></a>
+FileCache
+  </h2>
+</div>
+<p>An interface to the file cache</p>
+</div>
+<div class="body">
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FileCache</span> </span>{
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="constructor-1">
+  <h3>
+    <a href="#constructor-1" name="constructor-1" class="pilcrow"></a>
+constructor
+  </h3>
+</div>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">name</span>
+<span class="dox_type">String</span>
+<span>a namespace
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  <span class="hljs-keyword">constructor</span> (name) {
+    <span class="hljs-keyword">this</span>.collection = (
+      loki.getCollection(name) ||
+      loki.addCollection(name, { <span class="hljs-attr">unique</span>: <span class="hljs-string">'path'</span> })
+    )
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="store">
+  <h3>
+    <a href="#store" name="store" class="pilcrow"></a>
+store
+  </h3>
+</div>
+<p>store a file</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">path</span>
+<span class="dox_type">String</span>
+<span>as it appears in ms files structure
+</span>
+</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">file</span>
+<span class="dox_type">Object</span>
+<span>as it appears in ms files structure
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  store (path, file) {
+    <span class="hljs-keyword">const</span> doc = {path, file}
+    <span class="hljs-keyword">const</span> existing = <span class="hljs-keyword">this</span>.collection.findOne({path})
+    <span class="hljs-keyword">if</span> (existing) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.update(existing, doc)
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.insert(doc)
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="retrieve">
+  <h3>
+    <a href="#retrieve" name="retrieve" class="pilcrow"></a>
+retrieve
+  </h3>
+</div>
+<p>retrieve a file</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">path</span>
+<span class="dox_type">String</span>
+<span>as it appears in ms files structure
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  retrieve (path) {
+    <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">this</span>.collection.findOne({path})
+    <span class="hljs-keyword">if</span> (result) <span class="hljs-keyword">return</span> result.file
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="all">
+  <h3>
+    <a href="#all" name="all" class="pilcrow"></a>
+all
+  </h3>
+</div>
+<p>retrieve all files</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  all () {
+    <span class="hljs-keyword">const</span> results = {}
+    <span class="hljs-keyword">this</span>.collection.data.forEach(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> {
+      results[doc.path] = doc.file
+    })
+    <span class="hljs-keyword">return</span> results
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="match">
+  <h3>
+    <a href="#match" name="match" class="pilcrow"></a>
+match
+  </h3>
+</div>
+<p>applies multimatch mask to stored files</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">mask</span>
+<span class="dox_type">String</span>
+<span>minimatch globbed mask
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  match (mask) {
+    <span class="hljs-keyword">const</span> results = {}
+    <span class="hljs-keyword">this</span>.collection.data.forEach(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> {
+      <span class="hljs-keyword">if</span> (!minimatch(doc.path, mask)) <span class="hljs-keyword">return</span>
+      results[doc.path] = doc.file
+    })
+    <span class="hljs-keyword">return</span> results
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="remove">
+  <h3>
+    <a href="#remove" name="remove" class="pilcrow"></a>
+remove
+  </h3>
+</div>
+<p>deletes file from cache</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">path</span>
+<span class="dox_type">String</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  remove (path) {
+    <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">this</span>.collection.findOne({path})
+    <span class="hljs-keyword">if</span> (result) result.remove()
+  }
+}
+
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="valuecache">
+  <h2>
+    <a href="#valuecache" name="valuecache" class="pilcrow"></a>
+ValueCache
+  </h2>
+</div>
+<p>An interface for a key value cache</p>
+</div>
+<div class="body">
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ValueCache</span> </span>{
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="constructor-2">
+  <h3>
+    <a href="#constructor-2" name="constructor-2" class="pilcrow"></a>
+constructor
+  </h3>
+</div>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">name</span>
+<span class="dox_type">String</span>
+<span>a namespace
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  <span class="hljs-keyword">constructor</span> (name) {
+    <span class="hljs-keyword">this</span>.collection = (
+      loki.getCollection(name) ||
+      loki.addCollection(name, { <span class="hljs-attr">unique</span>: <span class="hljs-string">'key'</span> })
+    )
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="store-1">
+  <h3>
+    <a href="#store-1" name="store-1" class="pilcrow"></a>
+store
+  </h3>
+</div>
+<p>store a value</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">key</span>
+<span class="dox_type">String</span>
+</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">value</span>
+<span class="dox_type">String</span>
+<span class="dox_type">Object</span>
+<span class="dox_type">Buffer</span>
+<span>pretty much anything
+</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  store (key, value) {
+    <span class="hljs-keyword">const</span> existing = <span class="hljs-keyword">this</span>.collection.findOne({ key })
+    <span class="hljs-keyword">if</span> (existing) {
+      existing.value = value
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.update(existing)
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.insert({ key, value })
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="retrieve-1">
+  <h3>
+    <a href="#retrieve-1" name="retrieve-1" class="pilcrow"></a>
+retrieve
+  </h3>
+</div>
+<p>retrieve a value</p>
+</div>
+<div class="body">
+</div>
+<div class="details">
+<div class="dox_tag_title">Params</div>
+<div class="dox_tag_detail">
+<span class="dox_tag_name">key</span>
+<span class="dox_type">String</span>
+</div>
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  retrieve (key) {
+    <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">this</span>.collection.findOne({ key })
+    <span class="hljs-keyword">if</span> (result) <span class="hljs-keyword">return</span> result.value
+  }
+}
+
+<span class="hljs-keyword">export</span> {
+  FileCache,
+  ValueCache,
+  init,
+  save
+}
+
+</pre>
+        </td>
+      </tr>
+    
+  </tbody>
+</table>
+
+  </div>
+</body>
+</html>

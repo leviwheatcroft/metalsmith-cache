@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>README.md</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="doc-style.css" />
+  <script src="doc-filelist.js"></script>
+  <script>
+    var relativeDir = "";
+    var thisFile = "README.md";
+    var defaultSidebar = true;
+  </script>
+  <script src="doc-script.js"></script>
+
+</head>
+<body>
+  <div id="sidebar_wrapper">
+    <div id="sidebar_switch">
+      <span class="tree">Files</span>
+      <span class="headings">Headings</span>
+    </div>
+    <div id="tree"></div>
+    <div id="headings">
+
+      <div class="heading h1">
+        <a href="#metalsmith-cache">metalsmith-cache</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#install">install</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#api">api</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#example">example</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#lokijs">lokijs</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#dont-mutate-objects-stored-in-docs">don&#39;t mutate objects stored in docs</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#multiple-instances-of-collections-arent-synced">multiple instances of collections aren&#39;t synced</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#author">Author</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#contributing">Contributing</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#license">License</a>
+      </div>
+
+    </div>
+  </div>
+  <div id="sidebar-toggle"></div>
+  <div id="container">
+    <div class="docs markdown"><div class="pilwrap" id="metalsmith-cache">
+  <h1>
+    <a href="#metalsmith-cache" name="metalsmith-cache" class="pilcrow"></a>
+metalsmith-cache
+  </h1>
+</div>
+<p><img src="https://nodei.co/npm/metalsmith-cache.png?downloads=true&amp;downloadRank=true&amp;stars=true" alt="nodei.co"></p>
+<p><img src="https://img.shields.io/npm/v/metalsmith-cache.svg" alt="npm"></p>
+<p><img src="https://img.shields.io/github/issues/leviwheatcroft/metalsmith-cache.svg" alt="github-issues"></p>
+<p><img src="https://img.shields.io/github/stars/leviwheatcroft/metalsmith-cache.svg" alt="stars"></p>
+<p><img src="https://img.shields.io/github/forks/leviwheatcroft/metalsmith-cache.svg" alt="forks"></p>
+<p><a href="https://metalsmith.io" title="metalsmith site">metalsmith</a>] helper to cache values and files between builds.</p>
+<p>Highlights:</p>
+<ul>
+<li>wicked fast lokijs in-memory db</li>
+<li>simple api</li>
+</ul>
+<p>See the <a href="https://leviwheatcroft.github.io/metalsmith-cache" title="fancy annotated source">annotated source</a> or <a href="https://github.com/leviwheatcroft/metalsmith-cache" title="github repo">github repo</a></p>
+<div class="pilwrap" id="install">
+  <h2>
+    <a href="#install" name="install" class="pilcrow"></a>
+install
+  </h2>
+</div>
+<p><code>npm i --save metalsmith-cache</code></p>
+<p>Note that, this package will persist data in <code>cache.json</code> in your root folder. You should probably <code>.gitignore</code> that file. A postinstall warning is displayed regarding this concern.</p>
+<div class="pilwrap" id="api">
+  <h2>
+    <a href="#api" name="api" class="pilcrow"></a>
+api
+  </h2>
+</div>
+<p>See <a href="https://leviwheatcroft.github.io/metalsmith-cache" title="fancy annotated source">annotated source</a></p>
+<div class="pilwrap" id="example">
+  <h3>
+    <a href="#example" name="example" class="pilcrow"></a>
+example
+  </h3>
+</div>
+<pre><code class="javascript"><span class="hljs-keyword">import</span> {
+  FileCache,
+  ValueCache,
+  init <span class="hljs-keyword">as</span> initCache,
+  save <span class="hljs-keyword">as</span> saveCache
+} <span class="hljs-keyword">from</span> <span class="hljs-string">'metalsmith-cache'</span>
+
+initCache().then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+  fileCache = <span class="hljs-keyword">new</span> FileCache(<span class="hljs-string">'google-drive'</span>)
+  valueCache = <span class="hljs-keyword">new</span> ValueCache(<span class="hljs-string">'google-drive-params'</span>)
+})
+
+Metalsmith(<span class="hljs-string">'src'</span>)
+.use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
+  <span class="hljs-keyword">return</span> initCache().then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+    <span class="hljs-keyword">const</span> path = <span class="hljs-string">'some/path'</span>
+    <span class="hljs-comment">// store file</span>
+    fileCache.store(path, files[path])
+    <span class="hljs-comment">// retrieve file</span>
+    <span class="hljs-keyword">const</span> file = fileCache.retrieve(path))
+    <span class="hljs-comment">// store value</span>
+    valueCache.store(<span class="hljs-string">'lastRun'</span>, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().toISOString())
+    <span class="hljs-comment">// retrieve value</span>
+    <span class="hljs-keyword">const</span> value = valueCache.retrieve(<span class="hljs-string">'lastRun'</span>)
+    <span class="hljs-keyword">return</span> saveCache() <span class="hljs-comment">// promise</span>
+  })
+})
+.build( ... )
+</code></pre>
+<p>Full implementation examples:</p>
+<ul>
+<li><a href="https://github.com/christophercliff/metalsmith-webpack" title="metalsmith-webpack on github">metalsmith-webpack</a></li>
+<li><a href="https://github.com/leviwheatcroft/metalsmith-google-drive" title="metalsmith-google-drive on github">metalsmith-google-drive</a></li>
+</ul>
+<div class="pilwrap" id="lokijs">
+  <h2>
+    <a href="#lokijs" name="lokijs" class="pilcrow"></a>
+lokijs
+  </h2>
+</div>
+<p>No need to worry about this if you're just consuming this package, just some dev notes.</p>
+<p>There's some weirdness to be aware of when using lokijs</p>
+<div class="pilwrap" id="dont-mutate-objects-stored-in-docs">
+  <h3>
+    <a href="#dont-mutate-objects-stored-in-docs" name="dont-mutate-objects-stored-in-docs" class="pilcrow"></a>
+don't mutate objects stored in docs
+  </h3>
+</div>
+<pre><code>let doc = {foo: 'bar'}
+collection.insert(doc)
+doc.foo = 'baz'
+db.save() // will save {foo: 'baz'}
+</code></pre>
+<div class="pilwrap" id="multiple-instances-of-collections-arent-synced">
+  <h3>
+    <a href="#multiple-instances-of-collections-arent-synced" name="multiple-instances-of-collections-arent-synced" class="pilcrow"></a>
+multiple instances of collections aren't synced
+  </h3>
+</div>
+<pre><code>let loki = new Loki(...)
+let foo1 = loki.getCollection('foo')
+let foo2 = loki.getCollection('foo')
+foo1.count() // 0
+foo1.insert({...})
+foo2.count() // 0
+</code></pre>
+<div class="pilwrap" id="author">
+  <h2>
+    <a href="#author" name="author" class="pilcrow"></a>
+Author
+  </h2>
+</div>
+<p>Levi Wheatcroft <a href="mailto:levi@wht.cr.html">levi@wht.cr</a></p>
+<div class="pilwrap" id="contributing">
+  <h2>
+    <a href="#contributing" name="contributing" class="pilcrow"></a>
+Contributing
+  </h2>
+</div>
+<p>Contributions welcome; Please submit all pull requests against the master
+branch.</p>
+<div class="pilwrap" id="license">
+  <h2>
+    <a href="#license" name="license" class="pilcrow"></a>
+License
+  </h2>
+</div>
+<ul>
+<li><strong>MIT</strong> : http://opensource.org/licenses/MIT</li>
+</ul>
+</div>
+  </div>
+</body>
+</html>
