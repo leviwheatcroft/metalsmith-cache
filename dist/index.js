@@ -77,15 +77,21 @@ class FileCache {
   }
   /**
    * ### store
-   * store a file
-   * @param {String} path as it appears in ms files structure
+   * store files
+   * call with `store(files)` or `store(path, file)`
+   *
+   * @param {Object|String} files as it appears in ms files structure
    * @param {Object} file as it appears in ms files structure
    */
-  store(path, file) {
-    const doc = { path, file };
-    const existing = this.collection.findOne({ path });
-    if (existing) return this.collection.update(existing, doc);
-    return this.collection.insert(doc);
+  store(files, file) {
+    // alt syntax
+    if (typeof files === 'string' && file) files = { [files]: file };
+    Object.keys(files).forEach(path => {
+      const doc = { path, file: files[path] };
+      const existing = this.collection.findOne({ path });
+      if (existing) return this.collection.update(existing, doc);
+      return this.collection.insert(doc);
+    });
   }
   /**
    * ### retrieve

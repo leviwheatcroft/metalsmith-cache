@@ -44,6 +44,7 @@
     "debug": "^2.6.6",
     "lokijs": "^1.4.3",
     "minimatch": "^3.0.4",
+    "moment": "^2.18.1",
     "vow": "^0.4.15"
   },
   "devDependencies": {
@@ -74,6 +75,7 @@
     "mocha": "^3.1.2",
     "mocha-eslint": "^3.0.1",
     "node-readme": "^0.1.9",
+    "nodeunit": "^0.11.1",
     "npm-watch": "^0.1.8",
     "nyc": "^8.3.1"
   },
