@@ -21,6 +21,10 @@ var _debug = require('debug');
 
 var _debug2 = _interopRequireDefault(_debug);
 
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const dbg = (0, _debug2.default)('metalsmith-debug');
@@ -101,7 +105,17 @@ class FileCache {
    */
   retrieve(path) {
     const result = this.collection.findOne({ path });
-    if (result) return result.file;
+    if (!result) return;
+    if (result.file.contents) {
+      result.file.contents = Buffer.from(result.file.contents);
+    }
+    Object.keys(result.file).forEach(key => {
+      if (typeof result.file[key] === 'string' && /^[0-9|-]{10}T[0-9|:|.]{12}Z$/.test(result.file[key])) {
+        let date = (0, _moment2.default)(result.file[key], _moment2.default.ISO_8601, true);
+        if (date.isValid()) result.file[key] = date;
+      }
+    });
+    return result.file;
   }
   /**
    * ### all
