@@ -1,1 +1,1 @@
-var tree={"files":["README.md","package.json"],"dirs":{"lib":{"files":["index.js"]}}};
+var tree={"files":["README.md","package.json"],"dirs":{"lib":{"files":["index.js"]},"test":{"files":["index.js"]}}};

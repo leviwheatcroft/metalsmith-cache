@@ -102,6 +102,7 @@
 <span class="hljs-keyword">import</span> minimatch <span class="hljs-keyword">from</span> <span class="hljs-string">'minimatch'</span>
 <span class="hljs-keyword">import</span> vow <span class="hljs-keyword">from</span> <span class="hljs-string">'vow'</span>
 <span class="hljs-keyword">import</span> debug <span class="hljs-keyword">from</span> <span class="hljs-string">'debug'</span>
+<span class="hljs-keyword">import</span> moment <span class="hljs-keyword">from</span> <span class="hljs-string">'moment'</span>
 
 <span class="hljs-keyword">const</span> dbg = debug(<span class="hljs-string">'metalsmith-debug'</span>)
 
@@ -292,14 +293,16 @@ constructor
 store
   </h3>
 </div>
-<p>store a file</p>
+<p>store files
+call with <code>store(files)</code> or <code>store(path, file)</code></p>
 </div>
 <div class="body">
 </div>
 <div class="details">
 <div class="dox_tag_title">Params</div>
 <div class="dox_tag_detail">
-<span class="dox_tag_name">path</span>
+<span class="dox_tag_name">files</span>
+<span class="dox_type">Object</span>
 <span class="dox_type">String</span>
 <span>as it appears in ms files structure
 </span>
@@ -315,11 +318,27 @@ store
 
         </td>
         <td class="code highlight">
-          <pre class="javascript">  store (path, file) {
-    <span class="hljs-keyword">const</span> doc = {path, file}
-    <span class="hljs-keyword">const</span> existing = <span class="hljs-keyword">this</span>.collection.findOne({path})
-    <span class="hljs-keyword">if</span> (existing) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.update(existing, doc)
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.insert(doc)
+          <pre class="javascript">  store (files, file) {
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-9" id="section-9"></a>
+</div>
+<p>alt syntax</p>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> files === <span class="hljs-string">'string'</span> &amp;&amp; file) files = { [files]: file }
+    <span class="hljs-built_in">Object</span>.keys(files).forEach(<span class="hljs-function">(<span class="hljs-params">path</span>) =&gt;</span> {
+      <span class="hljs-keyword">const</span> doc = { path, <span class="hljs-attr">file</span>: files[path] }
+      <span class="hljs-keyword">const</span> existing = <span class="hljs-keyword">this</span>.collection.findOne({path})
+      <span class="hljs-keyword">if</span> (existing) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.update(existing, doc)
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.insert(doc)
+    })
   }
 </pre>
         </td>
@@ -354,7 +373,20 @@ retrieve
         <td class="code highlight">
           <pre class="javascript">  retrieve (path) {
     <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">this</span>.collection.findOne({path})
-    <span class="hljs-keyword">if</span> (result) <span class="hljs-keyword">return</span> result.file
+    <span class="hljs-keyword">if</span> (!result) <span class="hljs-keyword">return</span>
+    <span class="hljs-keyword">if</span> (result.file.contents) {
+      result.file.contents = Buffer.from(result.file.contents)
+    }
+    <span class="hljs-built_in">Object</span>.keys(result.file).forEach(<span class="hljs-function">(<span class="hljs-params">key</span>) =&gt;</span> {
+      <span class="hljs-keyword">if</span> (
+        <span class="hljs-keyword">typeof</span> result.file[key] === <span class="hljs-string">'string'</span> &amp;&amp;
+        <span class="hljs-regexp">/^[0-9|-]{10}T[0-9|:|.]{12}Z$/</span>.test(result.file[key])
+      ) {
+        <span class="hljs-keyword">let</span> date = moment(result.file[key], moment.ISO_8601, <span class="hljs-literal">true</span>)
+        <span class="hljs-keyword">if</span> (date.isValid()) result.file[key] = date
+      }
+    })
+    <span class="hljs-keyword">return</span> result.file
   }
 </pre>
         </td>

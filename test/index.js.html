@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>index.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="../doc-style.css" />
+  <script src="../doc-filelist.js"></script>
+  <script>
+    var relativeDir = "../";
+    var thisFile = "test/index.js";
+    var defaultSidebar = true;
+  </script>
+  <script src="../doc-script.js"></script>
+
+</head>
+<body>
+  <div id="sidebar_wrapper">
+    <div id="sidebar_switch">
+      <span class="tree">Files</span>
+      <span class="headings">Headings</span>
+    </div>
+    <div id="tree"></div>
+    <div id="headings">
+
+    </div>
+  </div>
+  <div id="sidebar-toggle"></div>
+  <div id="container">
+    <div class="background highlight"></div>
+<table cellpadding="0" cellspacing="0">
+  <tbody>
+    
+      <tr>
+        <td class="docs">
+          <h1>index.js</h1>
+        </td>
+        <td class="code highlight"></td>
+      </tr>
+    
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-1" id="section-1"></a>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-keyword">import</span> {
+  FileCache,
+  ValueCache,
+  init,
+  save
+} <span class="hljs-keyword">from</span> <span class="hljs-string">'../lib/index.js'</span>
+<span class="hljs-keyword">import</span> {
+  unlinkSync <span class="hljs-keyword">as</span> unlink
+} <span class="hljs-keyword">from</span> <span class="hljs-string">'fs'</span>
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-2" id="section-2"></a>
+</div>
+<p>import debug from 'debug'</p>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-keyword">import</span> Metalsmith <span class="hljs-keyword">from</span> <span class="hljs-string">'metalsmith'</span>
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-3" id="section-3"></a>
+</div>
+<p>const dbg = debug('metalsmith-cache')</p>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-keyword">const</span> testDir = <span class="hljs-string">'test/fixtures'</span>
+<span class="hljs-keyword">import</span> assert <span class="hljs-keyword">from</span> <span class="hljs-string">'assert'</span>
+<span class="hljs-keyword">import</span> vow <span class="hljs-keyword">from</span> <span class="hljs-string">'vow'</span>
+
+<span class="hljs-keyword">const</span> namespace = <span class="hljs-string">'test'</span>
+
+describe(<span class="hljs-string">'metalsmith-cache'</span>, () =&gt; {
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="pilwrap">
+  <a class="pilcrow" href="#section-4" id="section-4"></a>
+</div>
+<p>clean up</p>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  after(<span class="hljs-function">(<span class="hljs-params">done</span>) =&gt;</span> {
+    save()
+    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> unlink(<span class="hljs-string">'cache.json'</span>))
+    .then(done)
+  })
+
+  it(<span class="hljs-string">'should be able to store and retrieve a file'</span>, (done) =&gt; {
+    <span class="hljs-keyword">const</span> path = <span class="hljs-string">'one.html'</span>
+    init()
+    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+      <span class="hljs-keyword">const</span> defer = vow.defer()
+      Metalsmith(testDir)
+      .use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
+        assert.ok(files[path], <span class="hljs-string">'incorrect path specified'</span>)
+        <span class="hljs-keyword">const</span> fileCache = <span class="hljs-keyword">new</span> FileCache(namespace)
+        fileCache.store(path, files[path])
+        <span class="hljs-keyword">return</span> save()
+      })
+      .use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
+        <span class="hljs-keyword">const</span> fileCache = <span class="hljs-keyword">new</span> FileCache(namespace)
+        <span class="hljs-keyword">const</span> file = fileCache.retrieve(path)
+        assert.ok(file, <span class="hljs-string">'file not retrieved?'</span>)
+        assert.ok(file.date <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">Date</span>, <span class="hljs-string">'date not converted'</span>)
+      })
+      .build(defer.resolve.bind(defer))
+      <span class="hljs-keyword">return</span> defer.promise()
+    })
+    .then(done)
+  })
+
+  it(<span class="hljs-string">'should be able to store and retrieve a value'</span>, (done) =&gt; {
+    init()
+    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+      <span class="hljs-keyword">const</span> defer = vow.defer()
+      Metalsmith(testDir)
+      .use(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+        <span class="hljs-keyword">const</span> valueCache = <span class="hljs-keyword">new</span> ValueCache(namespace)
+        valueCache.store(<span class="hljs-string">'testKey'</span>, <span class="hljs-string">'testValue'</span>)
+        <span class="hljs-keyword">return</span> save()
+      })
+      .use(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+        <span class="hljs-keyword">const</span> valueCache = <span class="hljs-keyword">new</span> ValueCache(namespace)
+        assert.equal(
+          valueCache.retrieve(<span class="hljs-string">'testKey'</span>),
+          <span class="hljs-string">'testValue'</span>,
+          <span class="hljs-string">'retrieved incorrect value'</span>
+        )
+      })
+      .build(defer.resolve.bind(defer))
+      <span class="hljs-keyword">return</span> defer.promise()
+    })
+    .then(done)
+  })
+
+  it(<span class="hljs-string">'should be able to clear cache'</span>, (done) =&gt; {
+    init()
+    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+      <span class="hljs-keyword">const</span> fileCache = <span class="hljs-keyword">new</span> FileCache(namespace)
+      <span class="hljs-keyword">const</span> valueCache = <span class="hljs-keyword">new</span> ValueCache(namespace)
+      assert.notEqual(fileCache.collection.data.length, <span class="hljs-number">0</span>, <span class="hljs-string">'nothing to clear'</span>)
+      assert.notEqual(valueCache.collection.data.length, <span class="hljs-number">0</span>, <span class="hljs-string">'nothing to clear'</span>)
+      fileCache.collection.clear()
+      valueCache.collection.clear()
+      assert.equal(fileCache.collection.data.length, <span class="hljs-number">0</span>, <span class="hljs-string">'FileCache not clear'</span>)
+      assert.equal(valueCache.collection.data.length, <span class="hljs-number">0</span>, <span class="hljs-string">'ValueCache not clear'</span>)
+    })
+    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> save())
+    .then(done)
+  })
+})
+
+</pre>
+        </td>
+      </tr>
+    
+  </tbody>
+</table>
+
+  </div>
+</body>
+</html>
