@@ -23,6 +23,10 @@
     <div id="headings">
 
       <div class="heading h2">
+        <a href="#instantiate-and-load">instantiate &amp;amp; load</a>
+      </div>
+
+      <div class="heading h2">
         <a href="#init">init</a>
       </div>
 
@@ -98,7 +102,8 @@
 
         </td>
         <td class="code highlight">
-          <pre class="javascript"><span class="hljs-keyword">import</span> Loki <span class="hljs-keyword">from</span> <span class="hljs-string">'lokijs'</span>
+          <pre class="javascript"><span class="hljs-comment">/* global loki */</span>
+<span class="hljs-keyword">import</span> Loki <span class="hljs-keyword">from</span> <span class="hljs-string">'lokijs'</span>
 <span class="hljs-keyword">import</span> minimatch <span class="hljs-keyword">from</span> <span class="hljs-string">'minimatch'</span>
 <span class="hljs-keyword">import</span> vow <span class="hljs-keyword">from</span> <span class="hljs-string">'vow'</span>
 <span class="hljs-keyword">import</span> debug <span class="hljs-keyword">from</span> <span class="hljs-string">'debug'</span>
@@ -129,17 +134,32 @@ loaded.promise()
     
       <tr>
         <td class="docs">
-          <div class="pilwrap">
-  <a class="pilcrow" href="#section-3" id="section-3"></a>
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="instantiate-and-load">
+  <h2>
+    <a href="#instantiate-and-load" name="instantiate-and-load" class="pilcrow"></a>
+instantiate &amp; load
+  </h2>
 </div>
-<p>instantiate &amp; load</p>
+<p>yes a global is the best option for the loki db connector.</p>
+</div>
+<div class="body">
+<p>if you instantiate loki more than once, and loadDatabase on each of them,
+then each will start with the same data but when each instance saves itself
+it will only save it's own changes, overwriting changes from other
+instances.</p>
+<p>a singleton isn't a singleton if different versions of a module are used</p>
+<p>therefore, a global variable is the best option IMO</p>
+</div>
+</div>
 
         </td>
         <td class="code highlight">
-          <pre class="javascript"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> loki = <span class="hljs-keyword">new</span> Loki(
-  <span class="hljs-string">'cache.json'</span>
-)
-loki.loadDatabase({}, () =&gt; loaded.resolve(loki))
+          <pre class="javascript"><span class="hljs-keyword">if</span> (!global.loki) {
+  global.loki = <span class="hljs-keyword">new</span> Loki(<span class="hljs-string">'cache.json'</span>)
+  loki.loadDatabase({}, () =&gt; loaded.resolve(loki))
+}
 
 </pre>
         </td>
