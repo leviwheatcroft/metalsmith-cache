@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.save = exports.init = exports.ValueCache = exports.FileCache = exports.loki = undefined;
+exports.save = exports.init = exports.ValueCache = exports.FileCache = undefined;
 
 var _lokijs = require('lokijs');
 
@@ -27,15 +27,30 @@ var _moment2 = _interopRequireDefault(_moment);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const dbg = (0, _debug2.default)('metalsmith-debug');
+const dbg = (0, _debug2.default)('metalsmith-cache');
 
 // promise to keep track of load state
+/* global loki */
 const loaded = _vow2.default.defer();
 loaded.promise().then(() => dbg('cache loaded'));
 
-// instantiate & load
-const loki = exports.loki = new _lokijs2.default('cache.json');
-loki.loadDatabase({}, () => loaded.resolve(loki));
+/**
+ * ## instantiate & load
+ * yes a global is the best option for the loki db connector.
+ *
+ * if you instantiate loki more than once, and loadDatabase on each of them,
+ * then each will start with the same data but when each instance saves itself
+ * it will only save it's own changes, overwriting changes from other
+ * instances.
+ *
+ * a singleton isn't a singleton if different versions of a module are used
+ *
+ * therefore, a global variable is the best option IMO
+ */
+if (!global.loki) {
+  global.loki = new _lokijs2.default('cache.json');
+  loki.loadDatabase({}, () => loaded.resolve(loki));
+}
 
 /**
  * ## init
