@@ -31,23 +31,15 @@
       </div>
 
       <div class="heading h2">
+        <a href="#.gitignore-cache">.gitignore cache</a>
+      </div>
+
+      <div class="heading h2">
         <a href="#api">api</a>
       </div>
 
       <div class="heading h3">
         <a href="#example">example</a>
-      </div>
-
-      <div class="heading h2">
-        <a href="#lokijs">lokijs</a>
-      </div>
-
-      <div class="heading h3">
-        <a href="#dont-mutate-objects-stored-in-docs">don&#39;t mutate objects stored in docs</a>
-      </div>
-
-      <div class="heading h3">
-        <a href="#multiple-instances-of-collections-arent-synced">multiple instances of collections aren&#39;t synced</a>
       </div>
 
       <div class="heading h2">
@@ -78,11 +70,6 @@ metalsmith-cache
 <p><img src="https://img.shields.io/github/stars/leviwheatcroft/metalsmith-cache.svg" alt="stars"></p>
 <p><img src="https://img.shields.io/github/forks/leviwheatcroft/metalsmith-cache.svg" alt="forks"></p>
 <p><a href="https://metalsmith.io" title="metalsmith site">metalsmith</a>] helper to cache values and files between builds.</p>
-<p>Highlights:</p>
-<ul>
-<li>wicked fast lokijs in-memory db</li>
-<li>simple api</li>
-</ul>
 <p>See the <a href="https://leviwheatcroft.github.io/metalsmith-cache" title="fancy annotated source">annotated source</a> or <a href="https://github.com/leviwheatcroft/metalsmith-cache" title="github repo">github repo</a></p>
 <div class="pilwrap" id="install">
   <h2>
@@ -91,7 +78,13 @@ install
   </h2>
 </div>
 <p><code>npm i --save metalsmith-cache</code></p>
-<p>Note that, this package will persist data in <code>cache.json</code> in your root folder. You should probably <code>.gitignore</code> that file. A postinstall warning is displayed regarding this concern.</p>
+<div class="pilwrap" id=".gitignore-cache">
+  <h2>
+    <a href="#.gitignore-cache" name=".gitignore-cache" class="pilcrow"></a>
+.gitignore cache
+  </h2>
+</div>
+<p>This package will persist data in a <code>cache</code> directory in your project root. You should probably <code>.gitignore</code> that directory.</p>
 <div class="pilwrap" id="api">
   <h2>
     <a href="#api" name="api" class="pilcrow"></a>
@@ -107,30 +100,44 @@ example
 </div>
 <pre><code class="javascript"><span class="hljs-keyword">import</span> {
   FileCache,
-  ValueCache,
-  init <span class="hljs-keyword">as</span> initCache,
-  save <span class="hljs-keyword">as</span> saveCache
+  ValueCache
 } <span class="hljs-keyword">from</span> <span class="hljs-string">'metalsmith-cache'</span>
 
-initCache().then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
-  fileCache = <span class="hljs-keyword">new</span> FileCache(<span class="hljs-string">'google-drive'</span>)
-  valueCache = <span class="hljs-keyword">new</span> ValueCache(<span class="hljs-string">'google-drive-params'</span>)
-})
+fileCache = <span class="hljs-keyword">new</span> FileCache(<span class="hljs-string">'google-drive'</span>)
+valueCache = <span class="hljs-keyword">new</span> ValueCache(<span class="hljs-string">'google-drive-params'</span>)
 
 Metalsmith(<span class="hljs-string">'src'</span>)
+<span class="hljs-comment">// invalidate cache</span>
 .use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
-  <span class="hljs-keyword">return</span> initCache().then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
-    <span class="hljs-keyword">const</span> path = <span class="hljs-string">'some/path'</span>
-    <span class="hljs-comment">// store file</span>
-    fileCache.store(path, files[path])
-    <span class="hljs-comment">// retrieve file</span>
-    <span class="hljs-keyword">const</span> file = fileCache.retrieve(path))
-    <span class="hljs-comment">// store value</span>
-    valueCache.store(<span class="hljs-string">'lastRun'</span>, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().toISOString())
-    <span class="hljs-comment">// retrieve value</span>
-    <span class="hljs-keyword">const</span> value = valueCache.retrieve(<span class="hljs-string">'lastRun'</span>)
-    <span class="hljs-keyword">return</span> saveCache() <span class="hljs-comment">// promise</span>
-  })
+  <span class="hljs-keyword">return</span> fileCache.invalidate()
+})
+<span class="hljs-comment">// store a file</span>
+.use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
+  <span class="hljs-keyword">return</span> fileCache.store(<span class="hljs-string">'some/path'</span>, files[path])
+})
+<span class="hljs-comment">// retrieve file &amp; store in metalsmith files structure</span>
+.use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
+  <span class="hljs-keyword">return</span> fileCache.retrieve(<span class="hljs-string">'some/path'</span>)
+  .then(<span class="hljs-function">(<span class="hljs-params">file</span>) =&gt;</span> files[<span class="hljs-string">'some/path'</span>] = file)
+})
+<span class="hljs-comment">// merge all files from cache to metalsmith files structure</span>
+.use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
+  <span class="hljs-keyword">return</span> fileCache.all()
+  .then(<span class="hljs-function">(<span class="hljs-params">cache</span>) =&gt;</span> <span class="hljs-built_in">Object</span>.assign(files, cache))
+})
+<span class="hljs-comment">// fetch files according to multimatch mask</span>
+.use(<span class="hljs-function">(<span class="hljs-params">files</span>) =&gt;</span> {
+  <span class="hljs-keyword">return</span> fileCache.mask(<span class="hljs-string">'**/*.html'</span>)
+  .then(<span class="hljs-function">(<span class="hljs-params">cache</span>) =&gt;</span> <span class="hljs-built_in">Object</span>.assign(files, cache))
+})
+<span class="hljs-comment">// store a value</span>
+.use(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+  <span class="hljs-keyword">return</span> valueCache.store(<span class="hljs-string">'lastRun'</span>, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().toISOString())
+})
+<span class="hljs-comment">// retrieve a value</span>
+.use(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+  valueCache.retrieve(<span class="hljs-string">'lastRun'</span>)
+  .then(<span class="hljs-function">(<span class="hljs-params">lastRun</span>) =&gt;</span> <span class="hljs-built_in">console</span>.log(lastRun))
 })
 .build( ... )
 </code></pre>
@@ -139,38 +146,6 @@ Metalsmith(<span class="hljs-string">'src'</span>)
 <li><a href="https://github.com/christophercliff/metalsmith-webpack" title="metalsmith-webpack on github">metalsmith-webpack</a></li>
 <li><a href="https://github.com/leviwheatcroft/metalsmith-google-drive" title="metalsmith-google-drive on github">metalsmith-google-drive</a></li>
 </ul>
-<div class="pilwrap" id="lokijs">
-  <h2>
-    <a href="#lokijs" name="lokijs" class="pilcrow"></a>
-lokijs
-  </h2>
-</div>
-<p>No need to worry about this if you're just consuming this package, just some dev notes.</p>
-<p>There's some weirdness to be aware of when using lokijs</p>
-<div class="pilwrap" id="dont-mutate-objects-stored-in-docs">
-  <h3>
-    <a href="#dont-mutate-objects-stored-in-docs" name="dont-mutate-objects-stored-in-docs" class="pilcrow"></a>
-don't mutate objects stored in docs
-  </h3>
-</div>
-<pre><code>let doc = {foo: 'bar'}
-collection.insert(doc)
-doc.foo = 'baz'
-db.save() // will save {foo: 'baz'}
-</code></pre>
-<div class="pilwrap" id="multiple-instances-of-collections-arent-synced">
-  <h3>
-    <a href="#multiple-instances-of-collections-arent-synced" name="multiple-instances-of-collections-arent-synced" class="pilcrow"></a>
-multiple instances of collections aren't synced
-  </h3>
-</div>
-<pre><code>let loki = new Loki(...)
-let foo1 = loki.getCollection('foo')
-let foo2 = loki.getCollection('foo')
-foo1.count() // 0
-foo1.insert({...})
-foo2.count() // 0
-</code></pre>
 <div class="pilwrap" id="author">
   <h2>
     <a href="#author" name="author" class="pilcrow"></a>

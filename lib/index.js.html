@@ -23,18 +23,6 @@
     <div id="headings">
 
       <div class="heading h2">
-        <a href="#instantiate-and-load">instantiate &amp;amp; load</a>
-      </div>
-
-      <div class="heading h2">
-        <a href="#init">init</a>
-      </div>
-
-      <div class="heading h2">
-        <a href="#save">save</a>
-      </div>
-
-      <div class="heading h2">
         <a href="#filecache">FileCache</a>
       </div>
 
@@ -63,6 +51,10 @@
       </div>
 
       <div class="heading h2">
+        <a href="#clear">clear</a>
+      </div>
+
+      <div class="heading h2">
         <a href="#valuecache">ValueCache</a>
       </div>
 
@@ -76,6 +68,10 @@
 
       <div class="heading h3">
         <a href="#retrieve-1">retrieve</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#callback">Callback</a>
       </div>
 
     </div>
@@ -102,15 +98,17 @@
 
         </td>
         <td class="code highlight">
-          <pre class="javascript"><span class="hljs-comment">/* global loki */</span>
-<span class="hljs-keyword">import</span> Loki <span class="hljs-keyword">from</span> <span class="hljs-string">'lokijs'</span>
+          <pre class="javascript"><span class="hljs-keyword">import</span> Nedb <span class="hljs-keyword">from</span> <span class="hljs-string">'nedb'</span>
 <span class="hljs-keyword">import</span> minimatch <span class="hljs-keyword">from</span> <span class="hljs-string">'minimatch'</span>
 <span class="hljs-keyword">import</span> vow <span class="hljs-keyword">from</span> <span class="hljs-string">'vow'</span>
 <span class="hljs-keyword">import</span> debug <span class="hljs-keyword">from</span> <span class="hljs-string">'debug'</span>
-<span class="hljs-keyword">import</span> moment <span class="hljs-keyword">from</span> <span class="hljs-string">'moment'</span>
-
+<span class="hljs-keyword">import</span> {
+  resolve
+} <span class="hljs-keyword">from</span> <span class="hljs-string">'path'</span>
+<span class="hljs-keyword">import</span> BSON <span class="hljs-keyword">from</span> <span class="hljs-string">'bson'</span>
+<span class="hljs-keyword">const</span> bson = <span class="hljs-keyword">new</span> BSON()
 <span class="hljs-keyword">const</span> dbg = debug(<span class="hljs-string">'metalsmith-cache'</span>)
-
+<span class="hljs-keyword">const</span> cacheRoot = <span class="hljs-string">'cache'</span>
 </pre>
         </td>
       </tr>
@@ -120,126 +118,14 @@
           <div class="pilwrap">
   <a class="pilcrow" href="#section-2" id="section-2"></a>
 </div>
-<p>promise to keep track of load state</p>
+<p>if (!global.nedb) {
+global.nedb = new Nedb({filename: 'cache.db'})
+nedb.loadDatabase({}, () =&gt; loaded.resolve(nedb))
+}</p>
 
         </td>
         <td class="code highlight">
-          <pre class="javascript"><span class="hljs-keyword">const</span> loaded = vow.defer()
-loaded.promise()
-.then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> dbg(<span class="hljs-string">'cache loaded'</span>))
-
-</pre>
-        </td>
-      </tr>
-    
-      <tr>
-        <td class="docs">
-          <div class="dox">
-<div class="summary">
-<div class="pilwrap" id="instantiate-and-load">
-  <h2>
-    <a href="#instantiate-and-load" name="instantiate-and-load" class="pilcrow"></a>
-instantiate &amp; load
-  </h2>
-</div>
-<p>yes a global is the best option for the loki db connector.</p>
-</div>
-<div class="body">
-<p>if you instantiate loki more than once, and loadDatabase on each of them,
-then each will start with the same data but when each instance saves itself
-it will only save it's own changes, overwriting changes from other
-instances.</p>
-<p>a singleton isn't a singleton if different versions of a module are used</p>
-<p>therefore, a global variable is the best option IMO</p>
-</div>
-</div>
-
-        </td>
-        <td class="code highlight">
-          <pre class="javascript"><span class="hljs-keyword">if</span> (!global.loki) {
-  global.loki = <span class="hljs-keyword">new</span> Loki(<span class="hljs-string">'cache.json'</span>)
-  loki.loadDatabase({}, () =&gt; loaded.resolve(loki))
-}
-
-</pre>
-        </td>
-      </tr>
-    
-      <tr>
-        <td class="docs">
-          <div class="dox">
-<div class="summary">
-<div class="pilwrap" id="init">
-  <h2>
-    <a href="#init" name="init" class="pilcrow"></a>
-init
-  </h2>
-</div>
-<p>Promise resolved when db initiated.</p>
-</div>
-<div class="body">
-<p>Initialisation begins when the module is loaded. This fn merely returns a
-promise or calls a callback once initialisation is complete. That means it's
-ok to call <code>init</code> multiple times in your consumer code.</p>
-</div>
-<div class="details">
-<div class="dox_tag_title">Params</div>
-<div class="dox_tag_detail">
-<span class="dox_tag_name">cb</span>
-<span class="dox_type">Function</span>
-<span>callback
-</span>
-</div>
-</div>
-</div>
-
-        </td>
-        <td class="code highlight">
-          <pre class="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">init</span> (<span class="hljs-params">cb</span>) </span>{
-  <span class="hljs-keyword">if</span> (cb) <span class="hljs-keyword">return</span> loaded.promise().then(cb)
-  <span class="hljs-keyword">return</span> loaded.promise()
-}
-
-</pre>
-        </td>
-      </tr>
-    
-      <tr>
-        <td class="docs">
-          <div class="dox">
-<div class="summary">
-<div class="pilwrap" id="save">
-  <h2>
-    <a href="#save" name="save" class="pilcrow"></a>
-save
-  </h2>
-</div>
-<p>Writes db to disk</p>
-</div>
-<div class="body">
-</div>
-<div class="details">
-<div class="dox_tag_title">Params</div>
-<div class="dox_tag_detail">
-<span class="dox_tag_name">cb</span>
-<span class="dox_type">Function</span>
-<span>callback
-</span>
-</div>
-</div>
-</div>
-
-        </td>
-        <td class="code highlight">
-          <pre class="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">save</span> (<span class="hljs-params">cb</span>) </span>{
-  <span class="hljs-keyword">const</span> defer = vow.defer()
-  defer.promise()
-  .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> dbg(<span class="hljs-string">'cache saved'</span>))
-  .then(cb)
-  loki.saveDatabase(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> defer.resolve())
-  <span class="hljs-keyword">return</span> defer.promise()
-}
-
+          <pre class="javascript">
 </pre>
         </td>
       </tr>
@@ -294,11 +180,37 @@ constructor
         </td>
         <td class="code highlight">
           <pre class="javascript">  <span class="hljs-keyword">constructor</span> (name) {
-    <span class="hljs-keyword">this</span>.collection = (
-      loki.getCollection(name) ||
-      loki.addCollection(name, { <span class="hljs-attr">unique</span>: <span class="hljs-string">'path'</span> })
-    )
+    <span class="hljs-keyword">this</span>.collection = <span class="hljs-keyword">new</span> Nedb(resolve(cacheRoot, <span class="hljs-string">`<span class="hljs-subst">${name}</span>-files.db`</span>))
+    <span class="hljs-keyword">this</span>.collection.loadDatabase()
   }
+  storeFile (path, file) {
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    file.path = path
+    <span class="hljs-keyword">let</span> doc = <span class="hljs-keyword">this</span>.fileAsDoc(file)
+    <span class="hljs-keyword">this</span>.collection.update(
+      {path},
+      doc,
+      {<span class="hljs-attr">upsert</span>: <span class="hljs-literal">true</span>},
+      (err) =&gt; {
+        <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> defer.reject(err)
+        defer.resolve()
+      }
+    )
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+  storeFiles (files) {
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">try</span> {
+      <span class="hljs-built_in">Object</span>.keys(files).forEach(<span class="hljs-keyword">async</span> (path) =&gt; {
+        <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.storeFile(path, files[path])
+      })
+      defer.resolve()
+    } <span class="hljs-keyword">catch</span> (err) {
+      defer.reject(err)
+    }
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+
 </pre>
         </td>
       </tr>
@@ -346,19 +258,14 @@ call with <code>store(files)</code> or <code>store(path, file)</code></p>
       <tr>
         <td class="docs">
           <div class="pilwrap">
-  <a class="pilcrow" href="#section-9" id="section-9"></a>
+  <a class="pilcrow" href="#section-6" id="section-6"></a>
 </div>
 <p>alt syntax</p>
 
         </td>
         <td class="code highlight">
-          <pre class="javascript">    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> files === <span class="hljs-string">'string'</span> &amp;&amp; file) files = { [files]: file }
-    <span class="hljs-built_in">Object</span>.keys(files).forEach(<span class="hljs-function">(<span class="hljs-params">path</span>) =&gt;</span> {
-      <span class="hljs-keyword">const</span> doc = { path, <span class="hljs-attr">file</span>: files[path] }
-      <span class="hljs-keyword">const</span> existing = <span class="hljs-keyword">this</span>.collection.findOne({path})
-      <span class="hljs-keyword">if</span> (existing) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.update(existing, doc)
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.insert(doc)
-    })
+          <pre class="javascript">    <span class="hljs-keyword">if</span> (file) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.storeFile(files, file)
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.storeFiles(files)
   }
 </pre>
         </td>
@@ -392,21 +299,30 @@ retrieve
         </td>
         <td class="code highlight">
           <pre class="javascript">  retrieve (path) {
-    <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">this</span>.collection.findOne({path})
-    <span class="hljs-keyword">if</span> (!result) <span class="hljs-keyword">return</span>
-    <span class="hljs-keyword">if</span> (result.file.contents) {
-      result.file.contents = Buffer.from(result.file.contents)
-    }
-    <span class="hljs-built_in">Object</span>.keys(result.file).forEach(<span class="hljs-function">(<span class="hljs-params">key</span>) =&gt;</span> {
-      <span class="hljs-keyword">if</span> (
-        <span class="hljs-keyword">typeof</span> result.file[key] === <span class="hljs-string">'string'</span> &amp;&amp;
-        <span class="hljs-regexp">/^[0-9|-]{10}T[0-9|:|.]{12}Z$/</span>.test(result.file[key])
-      ) {
-        <span class="hljs-keyword">let</span> date = moment(result.file[key], moment.ISO_8601, <span class="hljs-literal">true</span>)
-        <span class="hljs-keyword">if</span> (date.isValid()) result.file[key] = date
-      }
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.findOne({path}).exec(<span class="hljs-function">(<span class="hljs-params">err, doc</span>) =&gt;</span> {
+      <span class="hljs-keyword">if</span> (err) defer.reject(err)
+      defer.resolve(<span class="hljs-keyword">this</span>.docAsFile(doc))
     })
-    <span class="hljs-keyword">return</span> result.file
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+  fileAsDoc (file) {
+    <span class="hljs-keyword">return</span> {
+      <span class="hljs-attr">path</span>: file.path,
+      <span class="hljs-attr">file</span>: bson.serialize(file).toString(<span class="hljs-string">'base64'</span>)
+    }
+  }
+  docAsFile (doc) {
+    <span class="hljs-keyword">return</span> bson.deserialize(
+      Buffer.from(doc.file, <span class="hljs-string">'base64'</span>),
+      {<span class="hljs-attr">promoteBuffers</span>: <span class="hljs-literal">true</span>}
+    )
+  }
+  docsAsFiles (docs) {
+    <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">Array</span>.isArray(docs)) docs = [docs]
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.assign.apply(<span class="hljs-literal">null</span>, docs.map(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> {
+      <span class="hljs-keyword">return</span> {[doc.path]: <span class="hljs-keyword">this</span>.docAsFile(doc)}
+    }))
   }
 </pre>
         </td>
@@ -433,11 +349,20 @@ all
         </td>
         <td class="code highlight">
           <pre class="javascript">  all () {
-    <span class="hljs-keyword">const</span> results = {}
-    <span class="hljs-keyword">this</span>.collection.data.forEach(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> {
-      results[doc.path] = doc.file
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.find({}).exec(<span class="hljs-function">(<span class="hljs-params">err, docs</span>) =&gt;</span> {
+      <span class="hljs-keyword">if</span> (err) defer.reject(err)
+      defer.resolve(<span class="hljs-keyword">this</span>.docsAsFiles(docs))
     })
-    <span class="hljs-keyword">return</span> results
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+  paths () {
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.find({}, {<span class="hljs-attr">path</span>: <span class="hljs-number">1</span>}).exec(<span class="hljs-function">(<span class="hljs-params">err, docs</span>) =&gt;</span> {
+      <span class="hljs-keyword">if</span> (err) defer.reject(err)
+      defer.resolve(docs.map(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> doc.path))
+    })
+    <span class="hljs-keyword">return</span> defer.promise()
   }
 </pre>
         </td>
@@ -471,12 +396,11 @@ match
         </td>
         <td class="code highlight">
           <pre class="javascript">  match (mask) {
-    <span class="hljs-keyword">const</span> results = {}
-    <span class="hljs-keyword">this</span>.collection.data.forEach(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> {
-      <span class="hljs-keyword">if</span> (!minimatch(doc.path, mask)) <span class="hljs-keyword">return</span>
-      results[doc.path] = doc.file
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.all()
+    .then(<span class="hljs-function">(<span class="hljs-params">docs</span>) =&gt;</span> {
+      docs = docs.map(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> minimatch(doc.path, mask)).filter(<span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> e)
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.docsAsFiles(docs)
     })
-    <span class="hljs-keyword">return</span> results
   }
 </pre>
         </td>
@@ -508,8 +432,38 @@ remove
         </td>
         <td class="code highlight">
           <pre class="javascript">  remove (path) {
-    <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">this</span>.collection.findOne({path})
-    <span class="hljs-keyword">if</span> (result) result.remove()
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.remove({path}, {}, (err) =&gt; {
+      <span class="hljs-keyword">if</span> (err) defer.reject(err)
+      <span class="hljs-keyword">else</span> defer.resolve()
+    })
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="clear">
+  <h2>
+    <a href="#clear" name="clear" class="pilcrow"></a>
+clear
+  </h2>
+</div>
+</div>
+<div class="body">
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  invalidate () {
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.remove({}, {<span class="hljs-attr">multi</span>: <span class="hljs-literal">true</span>}, callback(defer))
+    <span class="hljs-keyword">return</span> defer.promise()
   }
 }
 
@@ -567,10 +521,8 @@ constructor
         </td>
         <td class="code highlight">
           <pre class="javascript">  <span class="hljs-keyword">constructor</span> (name) {
-    <span class="hljs-keyword">this</span>.collection = (
-      loki.getCollection(name) ||
-      loki.addCollection(name, { <span class="hljs-attr">unique</span>: <span class="hljs-string">'key'</span> })
-    )
+    <span class="hljs-keyword">this</span>.collection = <span class="hljs-keyword">new</span> Nedb(resolve(cacheRoot, <span class="hljs-string">`<span class="hljs-subst">${name}</span>-values.db`</span>))
+    <span class="hljs-keyword">this</span>.collection.loadDatabase()
   }
 </pre>
         </td>
@@ -610,13 +562,16 @@ store
         </td>
         <td class="code highlight">
           <pre class="javascript">  store (key, value) {
-    <span class="hljs-keyword">const</span> existing = <span class="hljs-keyword">this</span>.collection.findOne({ key })
-    <span class="hljs-keyword">if</span> (existing) {
-      existing.value = value
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.update(existing)
-    }
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.collection.insert({ key, value })
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.update(
+      {key},
+      {key, value},
+      {<span class="hljs-attr">upsert</span>: <span class="hljs-literal">true</span>},
+      callback(defer)
+    )
+    <span class="hljs-keyword">return</span> defer.promise()
   }
+
 </pre>
         </td>
       </tr>
@@ -647,16 +602,52 @@ retrieve
         </td>
         <td class="code highlight">
           <pre class="javascript">  retrieve (key) {
-    <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">this</span>.collection.findOne({ key })
-    <span class="hljs-keyword">if</span> (result) <span class="hljs-keyword">return</span> result.value
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.findOne({ key }, (err, doc) =&gt; {
+      <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> defer.reject(err)
+      <span class="hljs-keyword">if</span> (!doc) <span class="hljs-keyword">return</span> defer.reject(<span class="hljs-string">`no record for <span class="hljs-subst">${key}</span>`</span>)
+      defer.resolve(doc.value)
+    })
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+  invalidate () {
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.remove({}, {<span class="hljs-attr">multi</span>: <span class="hljs-literal">true</span>}, callback(defer))
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+}
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="callback">
+  <h2>
+    <a href="#callback" name="callback" class="pilcrow"></a>
+Callback
+  </h2>
+</div>
+<p>takes care of some boilerplate</p>
+</div>
+<div class="body">
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">callback</span> (<span class="hljs-params">deferred</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function">(<span class="hljs-params">err, result</span>) =&gt;</span> {
+    <span class="hljs-keyword">if</span> (err) deferred.reject(err)
+    <span class="hljs-keyword">else</span> deferred.resolve(result)
   }
 }
 
 <span class="hljs-keyword">export</span> {
   FileCache,
-  ValueCache,
-  init,
-  save
+  ValueCache
 }
 
 </pre>
