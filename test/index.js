@@ -1,8 +1,6 @@
 import {
   FileCache,
-  ValueCache,
-  init,
-  save
+  ValueCache
 } from '../lib/index.js'
 import {
   unlinkSync as unlink
@@ -19,72 +17,87 @@ const namespace = 'test'
 describe('metalsmith-cache', () => {
   // clean up
   after((done) => {
-    save()
-    .then(() => unlink('cache.json'))
-    .then(done)
+    unlink('cache/test-files.db')
+    unlink('cache/test-values.db')
+    done()
   })
 
   it('should be able to store and retrieve a file', (done) => {
     const path = 'one.html'
-    init()
-    .then(() => {
-      const defer = vow.defer()
-      Metalsmith(testDir)
-      .use((files) => {
-        assert.ok(files[path], 'incorrect path specified')
-        const fileCache = new FileCache(namespace)
-        fileCache.store(path, files[path])
-        return save()
-      })
-      .use((files) => {
-        const fileCache = new FileCache(namespace)
-        const file = fileCache.retrieve(path)
+    const defer = vow.defer()
+    Metalsmith(testDir)
+    .use((files) => {
+      assert.ok(files[path], 'incorrect path specified')
+      const fileCache = new FileCache(namespace)
+      return fileCache.store(path, files[path])
+    })
+    .use((files) => {
+      const fileCache = new FileCache(namespace)
+      fileCache.retrieve(path)
+      .then((file) => {
         assert.ok(file, 'file not retrieved?')
         assert.ok(file.date instanceof Date, 'date not converted')
+        assert.ok(Buffer.isBuffer(file.contents), 'contents not converted')
       })
-      .build(defer.resolve.bind(defer))
-      return defer.promise()
     })
-    .then(done)
+    .build(defer.resolve.bind(defer))
+    defer.promise().then(done)
   })
 
   it('should be able to store and retrieve a value', (done) => {
-    init()
-    .then(() => {
-      const defer = vow.defer()
-      Metalsmith(testDir)
-      .use(() => {
-        const valueCache = new ValueCache(namespace)
-        valueCache.store('testKey', 'testValue')
-        return save()
-      })
-      .use(() => {
-        const valueCache = new ValueCache(namespace)
-        assert.equal(
-          valueCache.retrieve('testKey'),
-          'testValue',
-          'retrieved incorrect value'
-        )
-      })
-      .build(defer.resolve.bind(defer))
-      return defer.promise()
+    const defer = vow.defer()
+    Metalsmith(testDir)
+    .use(() => {
+      const valueCache = new ValueCache(namespace)
+      return valueCache.store('testKey', 'testValue')
     })
-    .then(done)
+    .use(() => {
+      const valueCache = new ValueCache(namespace)
+      valueCache.retrieve('testKey')
+      .then((value) => {
+        assert.equal(value, 'testValue', 'retrieved incorrect value')
+      })
+    })
+    .build(defer.resolve.bind(defer))
+    defer.promise().then(done)
   })
 
   it('should be able to clear cache', (done) => {
-    init()
+    vow.resolve()
     .then(() => {
+      const defer = vow.defer()
       const fileCache = new FileCache(namespace)
-      const valueCache = new ValueCache(namespace)
-      assert.notEqual(fileCache.collection.data.length, 0, 'nothing to clear')
-      assert.notEqual(valueCache.collection.data.length, 0, 'nothing to clear')
-      fileCache.collection.clear()
-      valueCache.collection.clear()
-      assert.equal(fileCache.collection.data.length, 0, 'FileCache not clear')
-      assert.equal(valueCache.collection.data.length, 0, 'ValueCache not clear')
+      fileCache.collection.find({}, (err, docs) => {
+        if (err) defer.reject(err)
+        assert.notEqual(docs.length, 0, 'nothing to clear')
+        fileCache.invalidate()
+        .then(() => {
+          fileCache.collection.find({}, (err, docs) => {
+            if (err) defer.reject(err)
+            assert.equal(docs.length, 0, 'docs still present')
+            defer.resolve()
+          })
+        })
+      })
+      return defer.promise()
     })
-    .then(() => save())
+    .then(() => {
+      const defer = vow.defer()
+      const valueCache = new ValueCache(namespace)
+      valueCache.collection.find({}, (err, docs) => {
+        if (err) defer.reject(err)
+        assert.notEqual(docs.length, 0, 'nothing to clear')
+        valueCache.invalidate()
+        .then(() => {
+          valueCache.collection.find({}, (err, docs) => {
+            if (err) defer.reject(err)
+            assert.equal(docs.length, 0, 'docs still present')
+            defer.resolve()
+          })
+        })
+      })
+      return defer.promise()
+    })
     .then(done)
   })
 })

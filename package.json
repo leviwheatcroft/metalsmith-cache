@@ -41,10 +41,10 @@
     }
   },
   "dependencies": {
+    "bson": "^1.0.4",
     "debug": "^2.6.6",
-    "lokijs": "^1.4.3",
     "minimatch": "^3.0.4",
-    "moment": "^2.18.1",
+    "nedb": "^1.8.0",
     "vow": "^0.4.15"
   },
   "devDependencies": {

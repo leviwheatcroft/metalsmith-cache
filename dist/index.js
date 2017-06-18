@@ -3,11 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.save = exports.init = exports.ValueCache = exports.FileCache = undefined;
+exports.ValueCache = exports.FileCache = undefined;
 
-var _lokijs = require('lokijs');
+var _nedb = require('nedb');
 
-var _lokijs2 = _interopRequireDefault(_lokijs);
+var _nedb2 = _interopRequireDefault(_nedb);
 
 var _minimatch = require('minimatch');
 
@@ -21,66 +21,23 @@ var _debug = require('debug');
 
 var _debug2 = _interopRequireDefault(_debug);
 
-var _moment = require('moment');
+var _path = require('path');
 
-var _moment2 = _interopRequireDefault(_moment);
+var _bson = require('bson');
+
+var _bson2 = _interopRequireDefault(_bson);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+const bson = new _bson2.default();
 const dbg = (0, _debug2.default)('metalsmith-cache');
-
-// promise to keep track of load state
-/* global loki */
-const loaded = _vow2.default.defer();
-loaded.promise().then(() => dbg('cache loaded'));
-
-/**
- * ## instantiate & load
- * yes a global is the best option for the loki db connector.
- *
- * if you instantiate loki more than once, and loadDatabase on each of them,
- * then each will start with the same data but when each instance saves itself
- * it will only save it's own changes, overwriting changes from other
- * instances.
- *
- * a singleton isn't a singleton if different versions of a module are used
- *
- * therefore, a global variable is the best option IMO
- */
-if (!global.loki) {
-  global.loki = new _lokijs2.default('cache.json');
-  loki.loadDatabase({}, () => loaded.resolve(loki));
-}
-
-/**
- * ## init
- * Promise resolved when db initiated.
- *
- * Initialisation begins when the module is loaded. This fn merely returns a
- * promise or calls a callback once initialisation is complete. That means it's
- * ok to call `init` multiple times in your consumer code.
- *
- * @param {Function} cb callback
- * @returns {Promise}
- */
-function init(cb) {
-  if (cb) return loaded.promise().then(cb);
-  return loaded.promise();
-}
-
-/**
- * ## save
- * Writes db to disk
- *
- * @param {Function} cb callback
- * @returns {Promise}
- */
-function save(cb) {
-  const defer = _vow2.default.defer();
-  defer.promise().then(() => dbg('cache saved')).then(cb);
-  loki.saveDatabase(() => defer.resolve());
-  return defer.promise();
-}
+const cacheRoot = 'cache';
+// if (!global.nedb) {
+//   global.nedb = new Nedb({filename: 'cache.db'})
+//   nedb.loadDatabase({}, () => loaded.resolve(nedb))
+// }
 
 /**
  * ## FileCache
@@ -92,8 +49,40 @@ class FileCache {
    * @param {String} name a namespace
    */
   constructor(name) {
-    this.collection = loki.getCollection(name) || loki.addCollection(name, { unique: 'path' });
+    this.collection = new _nedb2.default((0, _path.resolve)(cacheRoot, `${name}-files.db`));
+    this.collection.loadDatabase();
   }
+  storeFile(path, file) {
+    const defer = _vow2.default.defer();
+    file.path = path;
+    let doc = this.fileAsDoc(file);
+    this.collection.update({ path }, doc, { upsert: true }, err => {
+      if (err) return defer.reject(err);
+      defer.resolve();
+    });
+    return defer.promise();
+  }
+  storeFiles(files) {
+    var _this = this;
+
+    const defer = _vow2.default.defer();
+    try {
+      Object.keys(files).forEach((() => {
+        var _ref = _asyncToGenerator(function* (path) {
+          yield _this.storeFile(path, files[path]);
+        });
+
+        return function (_x) {
+          return _ref.apply(this, arguments);
+        };
+      })());
+      defer.resolve();
+    } catch (err) {
+      defer.reject(err);
+    }
+    return defer.promise();
+  }
+
   /**
    * ### store
    * store files
@@ -104,13 +93,8 @@ class FileCache {
    */
   store(files, file) {
     // alt syntax
-    if (typeof files === 'string' && file) files = { [files]: file };
-    Object.keys(files).forEach(path => {
-      const doc = { path, file: files[path] };
-      const existing = this.collection.findOne({ path });
-      if (existing) return this.collection.update(existing, doc);
-      return this.collection.insert(doc);
-    });
+    if (file) return this.storeFile(files, file);
+    return this.storeFiles(files);
   }
   /**
    * ### retrieve
@@ -119,18 +103,27 @@ class FileCache {
    * @returns {Object} the file object
    */
   retrieve(path) {
-    const result = this.collection.findOne({ path });
-    if (!result) return;
-    if (result.file.contents) {
-      result.file.contents = Buffer.from(result.file.contents);
-    }
-    Object.keys(result.file).forEach(key => {
-      if (typeof result.file[key] === 'string' && /^[0-9|-]{10}T[0-9|:|.]{12}Z$/.test(result.file[key])) {
-        let date = (0, _moment2.default)(result.file[key], _moment2.default.ISO_8601, true);
-        if (date.isValid()) result.file[key] = date;
-      }
+    const defer = _vow2.default.defer();
+    this.collection.findOne({ path }).exec((err, doc) => {
+      if (err) defer.reject(err);
+      defer.resolve(this.docAsFile(doc));
     });
-    return result.file;
+    return defer.promise();
+  }
+  fileAsDoc(file) {
+    return {
+      path: file.path,
+      file: bson.serialize(file).toString('base64')
+    };
+  }
+  docAsFile(doc) {
+    return bson.deserialize(Buffer.from(doc.file, 'base64'), { promoteBuffers: true });
+  }
+  docsAsFiles(docs) {
+    if (!Array.isArray(docs)) docs = [docs];
+    return Object.assign.apply(null, docs.map(doc => {
+      return { [doc.path]: this.docAsFile(doc) };
+    }));
   }
   /**
    * ### all
@@ -138,11 +131,20 @@ class FileCache {
    * @returns {Object} paths as keys, similar structure to ms files structure
    */
   all() {
-    const results = {};
-    this.collection.data.forEach(doc => {
-      results[doc.path] = doc.file;
+    const defer = _vow2.default.defer();
+    this.collection.find({}).exec((err, docs) => {
+      if (err) defer.reject(err);
+      defer.resolve(this.docsAsFiles(docs));
     });
-    return results;
+    return defer.promise();
+  }
+  paths() {
+    const defer = _vow2.default.defer();
+    this.collection.find({}, { path: 1 }).exec((err, docs) => {
+      if (err) defer.reject(err);
+      defer.resolve(docs.map(doc => doc.path));
+    });
+    return defer.promise();
   }
   /**
    * ### match
@@ -151,12 +153,10 @@ class FileCache {
    * @returns {Object} paths as keys, similar structure to ms files structure
    */
   match(mask) {
-    const results = {};
-    this.collection.data.forEach(doc => {
-      if (!(0, _minimatch2.default)(doc.path, mask)) return;
-      results[doc.path] = doc.file;
+    return this.all().then(docs => {
+      docs = docs.map(doc => (0, _minimatch2.default)(doc.path, mask)).filter(e => e);
+      return this.docsAsFiles(docs);
     });
-    return results;
   }
   /**
    * ### remove
@@ -164,8 +164,20 @@ class FileCache {
    * @param {String} path
    */
   remove(path) {
-    const result = this.collection.findOne({ path });
-    if (result) result.remove();
+    const defer = _vow2.default.defer();
+    this.collection.remove({ path }, {}, err => {
+      if (err) defer.reject(err);else defer.resolve();
+    });
+    return defer.promise();
+  }
+  /**
+   * ## clear
+   *
+   */
+  invalidate() {
+    const defer = _vow2.default.defer();
+    this.collection.remove({}, { multi: true }, callback(defer));
+    return defer.promise();
   }
 }
 
@@ -179,7 +191,8 @@ class ValueCache {
    * @param {String} name a namespace
    */
   constructor(name) {
-    this.collection = loki.getCollection(name) || loki.addCollection(name, { unique: 'key' });
+    this.collection = new _nedb2.default((0, _path.resolve)(cacheRoot, `${name}-values.db`));
+    this.collection.loadDatabase();
   }
   /**
    * ### store
@@ -188,25 +201,40 @@ class ValueCache {
    * @param {String|Object|Buffer} value pretty much anything
    */
   store(key, value) {
-    const existing = this.collection.findOne({ key });
-    if (existing) {
-      existing.value = value;
-      return this.collection.update(existing);
-    }
-    return this.collection.insert({ key, value });
+    const defer = _vow2.default.defer();
+    this.collection.update({ key }, { key, value }, { upsert: true }, callback(defer));
+    return defer.promise();
   }
+
   /**
    * ### retrieve
    * retrieve a value
    * @param {String} key
    */
   retrieve(key) {
-    const result = this.collection.findOne({ key });
-    if (result) return result.value;
+    const defer = _vow2.default.defer();
+    this.collection.findOne({ key }, (err, doc) => {
+      if (err) return defer.reject(err);
+      if (!doc) return defer.reject(`no record for ${key}`);
+      defer.resolve(doc.value);
+    });
+    return defer.promise();
   }
+  invalidate() {
+    const defer = _vow2.default.defer();
+    this.collection.remove({}, { multi: true }, callback(defer));
+    return defer.promise();
+  }
+}
+/**
+ * ## Callback
+ * takes care of some boilerplate
+ */
+function callback(deferred) {
+  return (err, result) => {
+    if (err) deferred.reject(err);else deferred.resolve(result);
+  };
 }
 
 exports.FileCache = FileCache;
 exports.ValueCache = ValueCache;
-exports.init = init;
-exports.save = save;
