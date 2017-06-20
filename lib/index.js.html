@@ -180,7 +180,8 @@ constructor
         </td>
         <td class="code highlight">
           <pre class="javascript">  <span class="hljs-keyword">constructor</span> (name) {
-    <span class="hljs-keyword">this</span>.collection = <span class="hljs-keyword">new</span> Nedb(resolve(cacheRoot, <span class="hljs-string">`<span class="hljs-subst">${name}</span>-files.db`</span>))
+    <span class="hljs-keyword">this</span>.descriptor = <span class="hljs-string">`<span class="hljs-subst">${name}</span>-files.db`</span>
+    <span class="hljs-keyword">this</span>.collection = <span class="hljs-keyword">new</span> Nedb(resolve(cacheRoot, <span class="hljs-keyword">this</span>.descriptor))
     <span class="hljs-keyword">this</span>.collection.loadDatabase()
   }
   storeFile (path, file) {
@@ -319,6 +320,7 @@ retrieve
     )
   }
   docsAsFiles (docs) {
+    <span class="hljs-keyword">if</span> (docs === <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>
     <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">Array</span>.isArray(docs)) docs = [docs]
     <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.assign.apply(<span class="hljs-literal">null</span>, docs.map(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> {
       <span class="hljs-keyword">return</span> {[doc.path]: <span class="hljs-keyword">this</span>.docAsFile(doc)}
@@ -351,7 +353,7 @@ all
           <pre class="javascript">  all () {
     <span class="hljs-keyword">const</span> defer = vow.defer()
     <span class="hljs-keyword">this</span>.collection.find({}).exec(<span class="hljs-function">(<span class="hljs-params">err, docs</span>) =&gt;</span> {
-      <span class="hljs-keyword">if</span> (err) defer.reject(err)
+      <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> defer.reject(err)
       defer.resolve(<span class="hljs-keyword">this</span>.docsAsFiles(docs))
     })
     <span class="hljs-keyword">return</span> defer.promise()
@@ -359,7 +361,7 @@ all
   paths () {
     <span class="hljs-keyword">const</span> defer = vow.defer()
     <span class="hljs-keyword">this</span>.collection.find({}, {<span class="hljs-attr">path</span>: <span class="hljs-number">1</span>}).exec(<span class="hljs-function">(<span class="hljs-params">err, docs</span>) =&gt;</span> {
-      <span class="hljs-keyword">if</span> (err) defer.reject(err)
+      <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> defer.reject(err)
       defer.resolve(docs.map(<span class="hljs-function">(<span class="hljs-params">doc</span>) =&gt;</span> doc.path))
     })
     <span class="hljs-keyword">return</span> defer.promise()
@@ -461,6 +463,7 @@ clear
         </td>
         <td class="code highlight">
           <pre class="javascript">  invalidate () {
+    dbg(<span class="hljs-string">`invalidating <span class="hljs-subst">${<span class="hljs-keyword">this</span>.descriptor}</span>`</span>)
     <span class="hljs-keyword">const</span> defer = vow.defer()
     <span class="hljs-keyword">this</span>.collection.remove({}, {<span class="hljs-attr">multi</span>: <span class="hljs-literal">true</span>}, callback(defer))
     <span class="hljs-keyword">return</span> defer.promise()
@@ -521,7 +524,8 @@ constructor
         </td>
         <td class="code highlight">
           <pre class="javascript">  <span class="hljs-keyword">constructor</span> (name) {
-    <span class="hljs-keyword">this</span>.collection = <span class="hljs-keyword">new</span> Nedb(resolve(cacheRoot, <span class="hljs-string">`<span class="hljs-subst">${name}</span>-values.db`</span>))
+    <span class="hljs-keyword">this</span>.descriptor = <span class="hljs-string">`<span class="hljs-subst">${name}</span>-values.db`</span>
+    <span class="hljs-keyword">this</span>.collection = <span class="hljs-keyword">new</span> Nedb(resolve(cacheRoot, <span class="hljs-keyword">this</span>.descriptor))
     <span class="hljs-keyword">this</span>.collection.loadDatabase()
   }
 </pre>
@@ -611,6 +615,7 @@ retrieve
     <span class="hljs-keyword">return</span> defer.promise()
   }
   invalidate () {
+    dbg(<span class="hljs-string">`invalidating <span class="hljs-subst">${<span class="hljs-keyword">this</span>.descriptor}</span>`</span>)
     <span class="hljs-keyword">const</span> defer = vow.defer()
     <span class="hljs-keyword">this</span>.collection.remove({}, {<span class="hljs-attr">multi</span>: <span class="hljs-literal">true</span>}, callback(defer))
     <span class="hljs-keyword">return</span> defer.promise()
