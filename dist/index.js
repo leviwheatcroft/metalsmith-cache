@@ -49,7 +49,8 @@ class FileCache {
    * @param {String} name a namespace
    */
   constructor(name) {
-    this.collection = new _nedb2.default((0, _path.resolve)(cacheRoot, `${name}-files.db`));
+    this.descriptor = `${name}-files.db`;
+    this.collection = new _nedb2.default((0, _path.resolve)(cacheRoot, this.descriptor));
     this.collection.loadDatabase();
   }
   storeFile(path, file) {
@@ -120,6 +121,7 @@ class FileCache {
     return bson.deserialize(Buffer.from(doc.file, 'base64'), { promoteBuffers: true });
   }
   docsAsFiles(docs) {
+    if (docs === null) return null;
     if (!Array.isArray(docs)) docs = [docs];
     return Object.assign.apply(null, docs.map(doc => {
       return { [doc.path]: this.docAsFile(doc) };
@@ -133,7 +135,7 @@ class FileCache {
   all() {
     const defer = _vow2.default.defer();
     this.collection.find({}).exec((err, docs) => {
-      if (err) defer.reject(err);
+      if (err) return defer.reject(err);
       defer.resolve(this.docsAsFiles(docs));
     });
     return defer.promise();
@@ -141,7 +143,7 @@ class FileCache {
   paths() {
     const defer = _vow2.default.defer();
     this.collection.find({}, { path: 1 }).exec((err, docs) => {
-      if (err) defer.reject(err);
+      if (err) return defer.reject(err);
       defer.resolve(docs.map(doc => doc.path));
     });
     return defer.promise();
@@ -175,6 +177,7 @@ class FileCache {
    *
    */
   invalidate() {
+    dbg(`invalidating ${this.descriptor}`);
     const defer = _vow2.default.defer();
     this.collection.remove({}, { multi: true }, callback(defer));
     return defer.promise();
@@ -191,7 +194,8 @@ class ValueCache {
    * @param {String} name a namespace
    */
   constructor(name) {
-    this.collection = new _nedb2.default((0, _path.resolve)(cacheRoot, `${name}-values.db`));
+    this.descriptor = `${name}-values.db`;
+    this.collection = new _nedb2.default((0, _path.resolve)(cacheRoot, this.descriptor));
     this.collection.loadDatabase();
   }
   /**
@@ -221,6 +225,7 @@ class ValueCache {
     return defer.promise();
   }
   invalidate() {
+    dbg(`invalidating ${this.descriptor}`);
     const defer = _vow2.default.defer();
     this.collection.remove({}, { multi: true }, callback(defer));
     return defer.promise();
