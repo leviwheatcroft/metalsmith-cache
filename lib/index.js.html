@@ -70,6 +70,10 @@
         <a href="#retrieve-1">retrieve</a>
       </div>
 
+      <div class="heading h3">
+        <a href="#find">find</a>
+      </div>
+
       <div class="heading h2">
         <a href="#callback">Callback</a>
       </div>
@@ -611,6 +615,40 @@ retrieve
       <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> defer.reject(err)
       <span class="hljs-keyword">if</span> (!doc) <span class="hljs-keyword">return</span> defer.reject(<span class="hljs-string">`no record for <span class="hljs-subst">${key}</span>`</span>)
       defer.resolve(doc.value)
+    })
+    <span class="hljs-keyword">return</span> defer.promise()
+  }
+</pre>
+        </td>
+      </tr>
+    
+      <tr>
+        <td class="docs">
+          <div class="dox">
+<div class="summary">
+<div class="pilwrap" id="find">
+  <h3>
+    <a href="#find" name="find" class="pilcrow"></a>
+find
+  </h3>
+</div>
+<p>execute query
+<a href="https://github.com/louischatriot/nedb#basic-querying">nedb ref</a></p>
+</div>
+<div class="body">
+<p>don't pass in a callback, this fn returns a promise</p>
+</div>
+<div class="details">
+</div>
+</div>
+
+        </td>
+        <td class="code highlight">
+          <pre class="javascript">  find (...args) {
+    <span class="hljs-keyword">const</span> defer = vow.defer()
+    <span class="hljs-keyword">this</span>.collection.find.apply(<span class="hljs-keyword">this</span>.collection, args).exec(<span class="hljs-function">(<span class="hljs-params">err, docs</span>) =&gt;</span> {
+      <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> defer.reject(err)
+      defer.resolve(docs)
     })
     <span class="hljs-keyword">return</span> defer.promise()
   }
