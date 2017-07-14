@@ -224,6 +224,23 @@ class ValueCache {
     });
     return defer.promise();
   }
+  /**
+   * ### find
+   * execute query
+   * [nedb ref](https://github.com/louischatriot/nedb#basic-querying)
+   *
+   * don't pass in a callback, this fn returns a promise
+   *
+   * @returns {Promise}
+   */
+  find(...args) {
+    const defer = _vow2.default.defer();
+    this.collection.find.apply(this.collection, args).exec((err, docs) => {
+      if (err) return defer.reject(err);
+      defer.resolve(docs);
+    });
+    return defer.promise();
+  }
   invalidate() {
     dbg(`invalidating ${this.descriptor}`);
     const defer = _vow2.default.defer();
